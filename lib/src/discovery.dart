@@ -46,12 +46,14 @@ class DeviceDiscoverer {
 
         if (packet == null) return;
 
-        final data = utf8.decode(packet.data);
-        final headers = data.split('\r\n');
-
-        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) return;
-
-        _addDevice(headers);
+        // final data = utf8.decode(packet.data);
+        // final headers = data.split('\r\n');
+        //
+        // if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) return;
+        //
+        // _addDevice(headers);
+        String message = String.fromCharCodes(packet.data);
+        print('Received: $message');
       }
     });
   }
@@ -76,7 +78,7 @@ class DeviceDiscoverer {
     if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
   }
 
-  void _search([String searchTarget = 'upnp:rootdevice']) {
+  void _search([String searchTarget = 'ssdp:all']) {
     final buff = StringBuffer()
       ..writeln('M-SEARCH * HTTP/1.1')
       ..writeln('HOST: 239.255.255.250:1900')
@@ -89,6 +91,7 @@ class DeviceDiscoverer {
     for (var socket in _sockets) {
       var multicastAddress = _getMulticastAddress(socket.address.type);
       // Repeated 3 times beacuse UDP messages might be lost
+      socket.broadcastEnabled = true;
       for (var i = 0; i < 3; i++) {
         socket.send(data, multicastAddress, 1900);
       }
